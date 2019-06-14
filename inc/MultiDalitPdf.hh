@@ -132,20 +132,23 @@ class MultiDalitPdf : public RooAbsPdf {
 
  private:
     Int_t *_resoParsBegin;
-    Int_t *_resoParsEnd;
+    // Int_t *_resoParsEnd;
     Int_t *_mothParsBegin;
-    Int_t *_mothParsEnd;
+    // Int_t *_mothParsEnd;
     RooListProxy _ParameterCol;
+    RooListProxy _motherParameters;
     RooListProxy _OthersCol;
     RooListProxy _rhoList, _phiList;
     TIterator *_parsItr;
+    TIterator *_mothItr;
     TIterator *_others;
     TIterator *_rhoItr;
     TIterator *_phiItr;
     void initialize();
     void FillParameter() const;
     Double_t ConstrFactor(const Double_t &FFa0 = 0.266) const;
-    TComplex PartialAmplitude(const Int_t  &index,
+    TComplex PartialAmplitude(const Int_t &index,
+            const vector<Double_t> &motherparas, 
             const vector<Double_t> &paras,
             const Double_t p4_1[4],
             const Double_t p4_2[4],
@@ -160,9 +163,10 @@ class MultiDalitPdf : public RooAbsPdf {
     vector<RooArgList> _ParaList;
     vector<TString> _NameList;
     vector<Int_t> _sourceList;
+    vector<Int_t> _angL;
     vector<LineShape::Shape> _LineShapeList;
     vector<DecayType::DecayType> _DecayNumList;
-    vector<TString> _motherNameList;
+    vector<TString> _motherName;
     vector<LineShape::Shape> _motherShapeList;
 
     // the data are used to calculate the Branchting fraction of
@@ -170,8 +174,11 @@ class MultiDalitPdf : public RooAbsPdf {
     TString  _fracDat , _PHSPDat;
     Int_t _SoloNotIdenPar;
     Double_t _rD;
-    // vector< vector<Double_t> > _parameters;
-    Double_t **_parameters;
+    // vector< vector<Double_t> > _resparas;
+    // max: 500
+    Double_t *_resparaList;
+    // max: 50
+    Double_t *_motheparaList; 
     Int_t *_paraSize;
     // vector<Double_t> _rhoV;
     // vector<Double_t> _phiV;
@@ -184,12 +191,12 @@ class MultiDalitPdf : public RooAbsPdf {
     Double_t **_mcp1;
     Double_t **_mcp2;
     Double_t **_mcp3;
-    Int_t Nmc;
-    bool m_fixbr;
-    bool _freeShape;
-    Double_t m_fixFFa0;
     Double_t *_weight;
-    TComplex **_Couple;
+    Int_t Nmc;
+    // bool m_fixbr;
+    // bool _freeShape;
+    // Double_t m_fixFFa0;
+    // TComplex **_Couple;
 
     ClassDef(MultiDalitPdf, 1)
 };

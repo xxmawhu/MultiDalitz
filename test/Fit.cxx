@@ -80,6 +80,11 @@ void Fit(int kk=1, TString resonanceList = "",
     spin2.setConstant();
     RooRealVar rRes("rRes", "", 3);
     rRes.setConstant();
+    RooRealVar meta("meta", "meta", 1.405, 1.0, 1.405);
+    RooRealVar weta("weta", "weta", 1.405, 1.0, 1.405);
+
+    ksksKpdf.configMother("eta(1405)", "eta(1405)", LineShape::RBW, 
+            RooArgList(spin0, rRes, meta, weta));
     //----------------add partial wave----------------------------   
     if(AddResonance["a0_980"]){
         RooRealVar ma0("ma0",    "ma0" , 0.990 , 0.88,   1.08);
