@@ -57,8 +57,6 @@ ClassImp(MultiDalitPdf)
         _paraSize[i] = 0;
     }
 
-    _resparaList = new Double_t[500];
-    _motheparaList = new Double_t[50];
 
     _cofV = new TComplex[50];
     for (Int_t index = 0; index < 50; index++) {
@@ -162,7 +160,6 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
     for (Int_t i  = 0; i< 50; i++) {
         _paraSize[i] = other._paraSize[i];
     }
-    _resparaList = new Double_t[500];
     _motheparaList = new Double_t[50];
     for (Int_t i = 0; i < 50; ++i) {
         _resparaList[i] = other._resparaList[i];
@@ -662,9 +659,10 @@ TComplex MultiDalitPdf::PartialAmplitude(const Int_t & index,
     // cout << "PartialAmplitude:: mothIdx = " << _sourceList[index] << endl;
     LineShape::Shape motherShape = _motherShapeList[mothIdx];
     // cout << "PartialAmplitude:: motherShape = " << motherShape << endl;
-    int mothParsBegin = _mothParsBegin[mothIdx];
-    int mothParsEnd = _mothParsBegin[mothIdx+1];
     
+
+    int resParsBegin = _resoParsBegin[index];
+    int resParsEnd = _resoParsBegin[index+1];
     // order spin, effective radius, mass, width,
     Double_t reta = mothpars[1];
     // vector<Double_t> mothPars;
@@ -748,7 +746,6 @@ void MultiDalitPdf::test() {
     }
     cout << endl << endl;
     cout << "Inf::fill parameters" << endl << endl << endl;
-    //FillParameter();
     cout << "total MC sample: "<< Nmc << endl;
     cout << "mass of particle 1 is " << TMath::Sqrt(RooP4Vector::dot(_mcp1[0], _mcp1[0])) << endl;
     cout << "mass of particle 2 is " << TMath::Sqrt(RooP4Vector::dot(_mcp2[0], _mcp2[0])) << endl;
@@ -870,7 +867,6 @@ void MultiDalitPdf::PartAmpInt() {
     RooRealVar *aPara(0);
     Int_t i = 0;
     Double_t _sum = 0;
-    FillParameter();
     for (int nn = 0; nn < nAmps; ++nn) {
         for (Int_t mm = 0; mm < nAmps ; ++mm) {
             _Couple[nn][mm] = 0;
@@ -920,34 +916,6 @@ void MultiDalitPdf::PartAmpInt() {
 //    _freeShape = true;
 // }
 
-
-
-void MultiDalitPdf::FillParameter() const {
-    return;
-    Int_t nAmps = _NameList.size();
-    _parsItr->Reset();
-    _mothItr->Reset();
-
-    RooRealVar *aPara(0);
-    for (Int_t index  = 0 ; index < _ParameterCol.getSize(); ++index) {
-        aPara = reinterpret_cast<RooRealVar*>(_parsItr->Next());
-        _resparaList[index] = aPara->getVal();
-    }
-    for (Int_t index  = 0 ; index < _motherParameters.getSize(); ++index) {
-        aPara = reinterpret_cast<RooRealVar*>(_mothItr->Next());
-        _motheparaList[index] = aPara->getVal();
-    }
-
-    _rhoItr->Reset();
-    _phiItr->Reset();
-    for (Int_t index  = 0 ; index < nAmps; ++index) {
-        Double_t rho = reinterpret_cast<RooRealVar*>(_rhoItr->Next())->getVal();
-        Double_t phi = reinterpret_cast<RooRealVar*>(_phiItr->Next())->getVal();
-        _cofV[index] = TComplex(rho*TMath::Cos(phi), rho*TMath::Sin(phi));
-    }
-    return;
-}
-
 TComplex MultiDalitPdf::getPartAmp(const Int_t & index,
         const  Double_t p4_1[4],
         const Double_t p4_2[4],
@@ -957,10 +925,17 @@ TComplex MultiDalitPdf::getPartAmp(const Int_t & index,
     int source = _sourceList[index];
 
     // cout << "getPartAmp:: source = " << source << endl; 
-    vector<Double_t> motherparas(&_motheparaList[_mothParsBegin[source]],
-            &_motheparaList[_mothParsBegin[source+1]]);
-    vector<Double_t> resparas(&_resparaList[_resoParsBegin[index]],
-            &_resparaList[_resoParsBegin[index+1]]);
+    vector<Double_t> motherparas;
+    int mIndex = _sourceList[index];
+    for (int i = _mothParsBegin[mIndex]; i < _mothParsBegin[mIndex+1]; i++) {
+        double tmp = reinterpret_cast<RooRealVar*>(_motherParameters.at(i))->getVal();
+        motherparas.push_back(tmp);
+    }
+    vector<Double_t> resparas;
+    for (int i = _resoParsBegin[index]; i < _resoParsBegin[index+1]; i++) {
+        double tmp = reinterpret_cast<RooRealVar*>(_ParameterCol.at(i))->getVal();
+        resparas.push_back(tmp);
+    }
 
     DecayType::DecayType modeNum = _DecayNumList[index];
     // cout << "getPartAmp modeNum = " << modeNum << endl;

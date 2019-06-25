@@ -144,7 +144,6 @@ class MultiDalitPdf : public RooAbsPdf {
     TIterator *_rhoItr;
     TIterator *_phiItr;
     void initialize();
-    void FillParameter() const;
     Double_t ConstrFactor(const Double_t &FFa0 = 0.266) const;
     TComplex PartialAmplitude(const Int_t &index,
             const vector<Double_t> &motherparas, 
@@ -173,8 +172,6 @@ class MultiDalitPdf : public RooAbsPdf {
     TString  _fracDat , _PHSPDat;
     Int_t _SoloNotIdenPar;
     Double_t _rD;
-    // vector< vector<Double_t> > _resparas;
-    // max: 500
     Double_t *_resparaList;
     // max: 50
     Double_t *_motheparaList; 
