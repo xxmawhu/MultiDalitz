@@ -50,21 +50,7 @@ ClassImp(MultiDalitPdf)
     // _rhoList = RooArgList("rhoList");
     // _phiList = RooArgList("phiList");
     _PHSPDat = PHSPdat;
-    _SoloNotIdenPar = 0;
     initialize();
-    _paraSize = new Int_t[50];
-    for (Int_t i  = 0; i< 50; i++) {
-        _paraSize[i] = 0;
-    }
-
-
-    _cofV = new TComplex[50];
-    for (Int_t index = 0; index < 50; index++) {
-        _cofV[index] = TComplex(0);
-    }
-    //m_fixbr = false;
-    //_freeShape = false;
-    //m_fixFFa0 = 0.266;
 }
 
 
@@ -92,11 +78,8 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
     _others  = _OthersCol.createIterator();
     _phiItr  = _phiList.createIterator();
     _rhoItr  = _rhoList.createIterator();
-    _rD = other._rD;
     _fracDat = other._fracDat;
     _PHSPDat = other._PHSPDat;
-    _SoloNotIdenPar = other._SoloNotIdenPar;
-    // _ParaList = other._ParaList;
     _NameList = other._NameList;
     _LineShapeList = other._LineShapeList;
     _DecayNumList = other._DecayNumList;
@@ -154,25 +137,6 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
             //_Couple[i][j] = other._Couple[i][j];
             _ParAmpInt[i][j] = other._ParAmpInt[i][j];
         }
-    }
-    // // cout<<__func__<<" cpoy done"<<endl;
-    _paraSize = new Int_t[50];
-    for (Int_t i  = 0; i< 50; i++) {
-        _paraSize[i] = other._paraSize[i];
-    }
-    _motheparaList = new Double_t[50];
-    for (Int_t i = 0; i < 50; ++i) {
-        _resparaList[i] = other._resparaList[i];
-        _motheparaList[i] = other._motheparaList[i];
-    }
-    //  for (Int_t i = 0; i < 50; ++i) {
-    //      for (Int_t j = 0; j < 10; ++j) {
-    //          _resparas[i][j] = other._resparas[i][j];
-    //      }
-    //  }
-    _cofV = new TComplex[50];
-    for (Int_t index = 0; index < 50; index++) {
-        _cofV[index] = TComplex(0);
     }
     _resoParsBegin = new Int_t[50];
     _resoParsBegin[0] = 0;
@@ -252,18 +216,6 @@ void MultiDalitPdf::initialize() {
 
     cout << "Read from " << _PHSPDat << "successful!, the total number of PHSP events is "
         << Nmc << endl << endl << endl;
-
-
-    _resparaList = new Double_t[500];
-    _motheparaList = new Double_t[50];
-   // for (Int_t i = 0; i < 50; ++i) {
-   //     _resparas[i] = new Double_t[10];
-   // }
-   // for (Int_t i = 0; i < 50; ++i) {
-   //     for (Int_t j = 0; j < 10; ++j) {
-   //         _resparas[i][j] = 0;
-   //     }
-   // }
 }
 
 
@@ -1051,9 +1003,6 @@ Double_t MultiDalitPdf::MaxAmp() {
     int n = 0;
     TRandom *random;
     Double_t maxAmp(1);
-    for (int i  = 0; i< _NameList.size(); i++) {
-     // cout<<_NameList[i]<<" : "<<_cofV[i]<<endl;
-    }
     while (1) {
         event.Generate();
         TLorentzVector *p1 = event.GetDecay(0);

@@ -170,29 +170,15 @@ class MultiDalitPdf : public RooAbsPdf {
     // the data are used to calculate the Branchting fraction of
     // each partial waves
     TString  _fracDat , _PHSPDat;
-    Int_t _SoloNotIdenPar;
-    Double_t _rD;
-    Double_t *_resparaList;
-    // max: 50
-    Double_t *_motheparaList; 
+
     Int_t *_paraSize;
-    // vector<Double_t> _rhoV;
-    // vector<Double_t> _phiV;
-    // vector<TComplex> _cofV;
-    TComplex *_cofV;
     TComplex **_ParAmpInt;
-    // vector<LineShape::Shape> _NeedSpin;
-    // vector<LineShape::Shape> _NeedrRes;
 
     Double_t **_mcp1;
     Double_t **_mcp2;
     Double_t **_mcp3;
     Double_t *_weight;
     Int_t Nmc;
-    // bool m_fixbr;
-    // bool _freeShape;
-    // Double_t m_fixFFa0;
-    // TComplex **_Couple;
 
     ClassDef(MultiDalitPdf, 1)
 };
