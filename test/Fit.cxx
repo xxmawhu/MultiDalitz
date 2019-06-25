@@ -35,14 +35,14 @@ using std::string;
 void AddRes(TString, map<string, int> &);
 
 void Fit(int kk = 1, TString resonanceList  =  "",
-        TString Datadat = "Data.dat",
-        TString Fracdat = "Frac.dat",
-        TString PHSPdat = "PHSP.dat"
+        TString Datadat = "/besfs/users/maxx/commu/hsuhz/Sample/Data/Data.dat",
+        TString Fracdat = "/besfs/users/maxx/commu/hsuhz/Sample/PHSP/Frac.dat",
+        TString PHSPdat = "/besfs/users/maxx/commu/hsuhz/Sample/PHSP/PHSP.dat"
         ) {
     // Fracdat used for compute the partial fraction
 
     gSystem->Load("libPhysics");
-    gSystem->Load("../lib/libKsKsK.so");
+    gSystem->Load("/besfs/users/maxx/commu/hsuhz/MultiDalitz/lib/libKsKsK.so");
 
     map<string, int> AddResonance;
     AddRes(resonanceList, AddResonance);
