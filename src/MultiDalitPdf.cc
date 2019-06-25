@@ -197,11 +197,12 @@ void MultiDalitPdf::initialize() {
     _mcp3 = new Double_t*[Nmc];
     _weight = new Double_t[Nmc];
     // _Couple = new TComplex*[50];
-    _ParAmpInt = new TComplex*[50];
     _resoParsBegin = new Int_t[50];
     // _resoParsEnd = new Int_t[50];
     _mothParsBegin = new Int_t[50];
     // _mothParsEnd = new Int_t[50];
+
+    _ParAmpInt = new TComplex*[50];
     for (int i = 0; i < 50; i++) {
         // _Couple[i] = new TComplex[50];
         _ParAmpInt[i] = new TComplex[50];
@@ -225,7 +226,7 @@ void MultiDalitPdf::initialize() {
         cout << "2nd line four-momentum of K-" << endl;
         cout << "3rd line four-momentum of pi0, weight" << endl;
         cout << "the order of four-momentum should be " << endl
-            << "E, px, py, pz" << endl << endl << endl;
+            << "E, px, py, pz" << endl ;
     }
 
     Int_t i = 0;
@@ -252,6 +253,10 @@ void MultiDalitPdf::initialize() {
     fclose(fp);
     Nmc = i;
 
+    cout << "Read from " << _PHSPDat << "successful!, the total number of PHSP events is "
+        << Nmc << endl << endl << endl;
+
+
     _resparaList = new Double_t[500];
     _motheparaList = new Double_t[50];
    // for (Int_t i = 0; i < 50; ++i) {
@@ -269,8 +274,7 @@ Double_t MultiDalitPdf::evaluate() const {
     Double_t p4_1[4] = {p11, p12, p13, p14};
     Double_t p4_2[4] = {p21, p22, p23, p24};
     Double_t p4_3[4] = {p31, p32, p33, p34};
-    FillParameter();
-    return calEva(p4_1, p4_2, p4_3);
+    return calTotalWidth(p4_1, p4_2, p4_3);
 }
 
 Double_t MultiDalitPdf::evaluate(Double_t _p11, Double_t _p12, Double_t _p13, 
@@ -280,8 +284,7 @@ Double_t MultiDalitPdf::evaluate(Double_t _p11, Double_t _p12, Double_t _p13,
     Double_t p4_1[4] = {_p11, _p12, _p13, _p14};
     Double_t p4_2[4] = {_p21, _p22, _p23, _p24};
     Double_t p4_3[4] = {_p31, _p32, _p33, _p34};
-    FillParameter();
-    return calEva(p4_1, p4_2, p4_3);
+    return calTotalWidth(p4_1, p4_2, p4_3);
 }
 
 Int_t MultiDalitPdf::getAnalyticalIntegral(RooArgSet& allVars,
@@ -303,8 +306,8 @@ Double_t MultiDalitPdf::analyticalIntegral(Int_t code, const char* rangeName)
 
     Double_t sum = 0;
     for (int i = 0; i < Nmc; i++) {
-        Double_t eva = calEva(_mcp1[i], _mcp2[i], _mcp3[i]);
-        sum = sum + eva*_weight[i] / Nmc;
+        double eva = calTotalWidth(_mcp1[i], _mcp2[i], _mcp3[i]);
+        sum +=  eva*_weight[i] / Nmc;
     }
     return sum;
 }
@@ -316,8 +319,6 @@ void MultiDalitPdf::setFracDat(const TString &dat) {
 
 
 void MultiDalitPdf::project(const char* proFileName) {
-    FillParameter();
-
     TFile f(proFileName, "recreate");
     TTree t("project", "the project of the mulitdalitz plot fit result");
 
@@ -328,6 +329,11 @@ void MultiDalitPdf::project(const char* proFileName) {
     //eva total amplitude^2
     Double_t eva;
     t.Branch("eva", &eva, "eva/D");
+
+    TH1D hkk("hkk", "mass of K+ K-", 40, 0.96, 1.34);
+    TH1D hkstp("hkstp", "mass of K+ pi0", 40, 0.62, 1.05);
+    TH1D hkstm("hkstm", "mass of K- pi0", 40, 0.62, 1.05);
+    TH1D heta("heta", "mass of K+ K- pi0", 40, 1.3, 1.6);
     
     //  m12: mkk, m13: mkstp, m23: mkstm 
     Double_t m12, m13, m23;
@@ -346,17 +352,6 @@ void MultiDalitPdf::project(const char* proFileName) {
     t.Branch("length", &waves, "length/I");
     t.Branch("FF", FF, "FF[length]/D");
     
-    _rhoItr->Reset();
-    _phiItr->Reset();
-    // Double_t *cof = new Double_t[length];
-    // for (Int_t index  = 0 ; index < nAmps; ++index) {
-    //     RooRealVar *aRho = reinterpret_cast<RooRealVar*>(_rhoItr->Next());
-    //     RooRealVar *aPhi = reinterpret_cast<RooRealVar*>(_phiItr->Next());
-    //     Double_t rho = aRho->getVal();
-    //     Double_t phi = aPhi->getVal();
-    //     cof[index] = TComplex(rho*TMath::Cos(phi), rho*TMath::Sin(phi));
-    // }
-
     TComplex *ffval = new TComplex[nAmps];
     for (Int_t i = 0;  i< Nmc; i++) {
         TLorentzVector p4_1(_mcp1[i][1], _mcp1[i][2], _mcp1[i][3], _mcp1[i][0]);
@@ -373,116 +368,93 @@ void MultiDalitPdf::project(const char* proFileName) {
             m_p4_3[j] = _mcp3[i][j];
         }
 
-        eva =  _weight[i] * calEva(_mcp1[i],  _mcp2[i],  _mcp3[i]);
+        eva =  _weight[i] * calTotalWidth(_mcp1[i],  _mcp2[i],  _mcp3[i]);
         waves = nAmps * nAmps;
-        //  //cout<<__func__<<endl;
-        //  //cout<<"eva: "<<eva<<endl;
-        //  TComplex totAmp(0);
-        //  for(Int_t ii =0; ii<nAmps; ++ii){
-        //      totAmp += _cofV[ii]
-        //          * getFFVal(ii,, _mcp1[i], _mcp2[i], _mcp3[i]);
-        //  }
-        // // cout<<"totAmp:" <<totAmp<<" rh02 = "<< totAmp.Rho2()<<endl;
-        //
-        
         for (int ii = 0; ii < nAmps; ii++) {
-            ffval[ii] = getFFVal(ii, _mcp1[i], _mcp2[i], _mcp3[i]);
+            ffval[ii] = getPartAmp(ii, _mcp1[i], _mcp2[i], _mcp3[i]);
         }
 
         for (Int_t ii = 0; ii < nAmps; ++ii) {
             for (Int_t jj = 0; jj < nAmps; ++jj) {
                 Int_t index = ii*nAmps + jj;
-                TComplex ampii = _cofV[ii] * ffval[ii];
-                TComplex ampjj = _cofV[jj] * ffval[jj];
-                FF[index] = _weight[i] * 0.5
-                    *(ampii * TComplex::Conjugate(ampjj)
-                        + ampjj * TComplex::Conjugate(ampii) );
+                FF[index] = 0.5*( ffval[ii] * TComplex::Conjugate(ffval[jj]) 
+                       + ffval[jj] * TComplex::Conjugate(ffval[ii]) );
             }
         }
+        hkk.Fill(m12, eva);
+        hkstp.Fill(m13, eva);
+        hkstm.Fill(m23, eva);
+        heta.Fill((p4_1 + p4_2 + p4_3).M(), eva);
         t.Fill();
     }
     t.Write();
-    f.Close();
+    hkk.Write();
+    hkstp.Write();
+    hkstm.Write();
+    heta.Write();
     delete[] FF;
     // delete cof;
-    delete ffval;
+    delete []ffval;
+    f.Close();
 }
 
-void MultiDalitPdf::fitFractions(const RooArgList& newParList,
-        Bool_t prInt_t, ostream& os) {
-    // recover from newPar
-    // Int_t nAmps = _NameList.size();
-    // TIterator *itrnewPar = newParList.createIterator();
-    // RooRealVar *newVar(0);
-    // RooRealVar *aRho(0), *aPhi(0);
-    // Double_t *oldrhoList = new Double_t[nAmps];
-    // TIterator *itrRho = _rhoList.createIterator();
-    // TIterator *itrPhi = _phiList.createIterator();
-    // itrRho->Reset();
-    // itrPhi->Reset();
-    // for (Int_t j = 0; j < nAmps; j++) {
-    //     aRho = reinterpret_cast<RooRealVar*>(itrRho->Next());
-    //     oldrhoList[j] = aRho->getVal();
-    // }
-    // for (Int_t i = 0; i< newParList.getSize(); i++) {
-    //     newVar = reinterpret_cast<RooRealVar*>(itrnewPar->Next());
-    //     // // cout<<"The "<<newVar->GetName()<<" is Reset"<<endl;
-    //     itrRho->Reset();
-    //     itrPhi->Reset();
-    //     for (Int_t j = 0; j < nAmps; j++) {
-    //         aRho = reinterpret_cast<RooRealVar*>(itrRho->Next());
-    //         //   //cout<<"The "<<newVar->GetName()<<" need Reset"<<endl;
-    //         //   //cout<<"tmp "<<aRho->GetName()<<" "<<aRho->getVal()<<endl;
-    //         if (TString(newVar->GetName()) == TString(aRho->GetName())) {
-    //             // //cout<<"fitFractions:: "<<endl;
-    //             // //cout<<aRho->GetName()<<" old value"
-    //             //     <<aRho->getVal()<<endl;
-    //             aRho->setVal(newVar->getVal() );
-    //             // // cout<<aRho->GetName()<<" new value"
-    //             //    <<aRho->getVal()<<endl;
-    //         }
-    //         aPhi = reinterpret_cast<RooRealVar*>(itrPhi->Next());
-    //         if (TString(newVar->GetName()) == TString(aPhi->GetName())) {
-    //             aPhi->setVal(newVar->getVal() );
-    //         }
-    //     }
-    // }
-    // FillParameter();
-        // //  TComplex totamp(0);
-    //  for (int i = 0; i< nAmps; ++i) {
-    //      for (int j = 0; j < nAmps; ++j) {
-    //          totamp += _Couple[i][j] * _cofV[i]
-    //              *TComplex::Conjugate(_cofV[j]);
-    //      }
-    //  }
 
+void MultiDalitPdf::fitFractions(ostream&os=cout) {
+    double p4_1[4], p4_2[4], p4_3[4], weight;
+    int nWaves = _rhoList.getSize();
+    double **FF = new double*[nWaves];
+    for (int i = 0; i < nWaves; i++) {
+        FF[i] = new double[nWaves];
+    }
+    for (int i = 0; i < nWaves; i++) {
+        for (int j = 0; j < nWaves; j++) {
+            FF[i][j] = 0;
+        }
+    }
+    TComplex *tmp = new TComplex[nWaves];
+    int nEvents = 0.0;
+    
+    FILE *fp;
+    fp=fopen(_fracDat, "r");
+    while (fscanf (fp, "%lf%lf%lf%lf\n%lf%lf%lf%lf\n%lf%lf%lf%lf%lf\n",
+                &p4_1[0], &p4_1[1], &p4_1[2], &p4_1[3],
+                &p4_2[0], &p4_2[1], &p4_2[2], &p4_2[3],
+                &p4_3[0], &p4_3[1], &p4_3[2], &p4_3[3],
+                &weight) != EOF) {
+        for (int i = 0; i < nWaves; i++) {
+            tmp[i] = this->getPartAmp(i, p4_1, p4_2, p4_3);
+        }
+        for (int i = 0; i < nWaves; i++) {
+            for (int j = 0; j < nWaves; j++) {
+                FF[i][j] += 0.5*( tmp[i] *TComplex::Conjugate(tmp[j])
+                       + tmp[j] * TComplex::Conjugate(tmp[i])).Re();
+            }
+        }
+        nEvents += 1;
+    }
+    cout << "Cal Fit Fraction, total events " << nEvents << endl;
+    double sum = 0.0;
 
-    //  Double_t *parAmps = new Double_t[nAmps];
-    // for (int i = 0; i < nAmps; ++i) {
-    //     parAmps[i]  = _Couple[i][i].Rho() * _cofV[i].Rho2();
-    //     // // cout<<"parAmps["<<i<<"]"<<parAmps[i]<<endl;
-    // }
+    for (int i = 0; i < nWaves; i++) {
+        for (int j = 0; j < nWaves; j++) {
+            FF[i][j] = FF[i][j]/nEvents;
+            sum += FF[i][j];
+        }
+    }
+    cout << "the partial fraction is" << endl << endl;
+    for (int i = 0; i < nWaves; i++) {
+        cout << "\t" <<std::setw(10) <<  _NameList[i] << " fraction is " 
+            << std::setw(4)<< std::setprecision(2) << FF[i][i]/sum*100 << "%"
+            << endl;
+    }
+    fclose(fp);
 
-    // Double_t total = 0;
-    // for (Int_t i = 0; i < nAmps; i++) {
-    //     const TString &name = _NameList[i];
-    //     Double_t FF = parAmps[i]/totamp.Rho();
-    //     os<< "Fraction:: " << name << " BF: "
-    //         <<FF << endl;
-    //     total += FF;
-    // }
-   //os << "Fraction:: total BF: " << total << endl;
-   //// reset to teh inital value
-   //itrRho->Reset();
-   //for (Int_t j = 0; j < nAmps; j++) {
-   //    aRho = reinterpret_cast<RooRealVar*>(itrRho->Next());
-   //    aRho->setVal(oldrhoList[j]);
-   //    // // cout<<aRho->GetName()<<" old value:"<<oldrhoList[j]<<endl;
-   //}
-   //delete itrRho;
-   //delete itrnewPar;
-   //delete[] oldrhoList;
+    delete []FF;
+    delete []tmp;
 }
+
+
+
 Int_t MultiDalitPdf::setPar(const RooArgList& newPar) {
     return 0;
 }
@@ -548,15 +520,15 @@ bool MultiDalitPdf::configMother(const TString &name, const TString &title,
 bool MultiDalitPdf::addResonance(const TString &name, const TString &mothername,
         const LineShape::Shape &lineShape,
         const DecayType::DecayType &modetype,
-        RooRealVar &rho, RooRealVar &phi,
+        RooAbsReal &rho, RooAbsReal &phi,
         RooArgList &params, const Int_t &angL) {
     // mothername used to match the mother, the "mothername" must be add in the
     // configMother
     // fix the first amplitude rho and phi
-    if (_rhoList.getSize() == 0) {
-        rho.setConstant();
-        phi.setConstant();
-    }
+    //if (_rhoList.getSize() == 0) {
+    //    reinterpret_cast<RooRealVar*>(rho).setConstant();
+    //    reinterpret_cast<RooRealVar*>(phi).setConstant();
+    //}
 
     // check the resonance list
     if (std::find (_NameList.begin (), _NameList.end (), name)!= _NameList.end()) {
@@ -650,31 +622,8 @@ bool MultiDalitPdf::addResonance(const TString &name, const TString &mothername,
     cout << endl << endl;
     return true;
 }
-void MultiDalitPdf::setrD(const Double_t &rD) {
-    _rD = rD;
-}
-void MultiDalitPdf::setIdenticalParticle(const Int_t& mode) {
-    if (mode == 12 || mode == 21) {
-        _SoloNotIdenPar = 3;
-    } else if (mode == 23 || mode == 32) {
-        _SoloNotIdenPar = 1;
-    } else if (mode == 13 || mode == 31) {
-        _SoloNotIdenPar = 2;
-    } else {
-        _SoloNotIdenPar = 0;
-    }
-}
 
-/*
- * the parWname is the name of partial wave. The name is set at the
- * function addResonance(name...). The name is used to get the
- * parameter of this resonance, which is a "RooArgList".
- * The parameters are stored in a List by order, exactly:
- * spin, radius, mass, ...
- * RBW or BW | --- width
- * Flatte    | --- g1, m1_1, m2_1, g2, m1_2, m2_2,sA
- * a0+       | --- gKK, gPiEta
- */
+
 TComplex MultiDalitPdf::PartialAmplitude(const Int_t & index,
         const vector<Double_t> &mothpars,
         const vector<Double_t> &resparas,
@@ -682,7 +631,9 @@ TComplex MultiDalitPdf::PartialAmplitude(const Int_t & index,
         const Double_t p4_solo[4]) const {
     // obtain the config for the mother
     int mothIdx = _sourceList[index];
+    // cout << "PartialAmplitude:: mothIdx = " << _sourceList[index] << endl;
     LineShape::Shape motherShape = _motherShapeList[mothIdx];
+    // cout << "PartialAmplitude:: motherShape = " << motherShape << endl;
     int mothParsBegin = _mothParsBegin[mothIdx];
     int mothParsEnd = _mothParsBegin[mothIdx+1];
     
@@ -699,11 +650,15 @@ TComplex MultiDalitPdf::PartialAmplitude(const Int_t & index,
         p4_1[3] + p4_2[3] + p4_solo[3]
     };
 
-    Int_t Ang = resparas[0];
+    Int_t AngEta = _angL[index];
+    Int_t Ang =  resparas[0];
+    // cout << "PartialAmplitude:: angEta " << AngEta << endl;
+    // cout << "PartialAmplitude:: angL " << Ang << endl;
     Double_t rRes = 3.0;
     if (resparas.size() > 1) {
         rRes = resparas[1];
     }
+    double rEta  = mothpars[1];
     // cout<<__func__<<endl;
 
     TComplex _pro(1, 0);
@@ -714,24 +669,29 @@ TComplex MultiDalitPdf::PartialAmplitude(const Int_t & index,
     Double_t s = 2*RooP4Vector::dot(p4_1, p4_2) + Sa + Sb;
     LineShape::Shape lineShape = _LineShapeList[index];
     _pro = Propagator::getVal(lineShape, s, Sa, Sb, resparas);
+
+    // cout << "PartialAmplitude resonance pro = " << _pro << endl;
     
-    Double_t propMoth = Propagator::getVal(lineShape, 
+    TComplex propMoth = Propagator::getVal(motherShape, 
             RooP4Vector::dot(p4total, p4total), 
             s, // mass^2 of resonance
             RooP4Vector::dot(p4_solo, p4_solo), // mass^2 of solo particle
             mothpars);
+    
+    // cout << "PartialAmplitude mother pro = " << propMoth << endl;
+
     // cout<<"S: "<<s<<endl;
 
-    Double_t p4R[4] = { p4_1[0]+ p4_2[0], p4_1[1]+p4_2[1],
+    Double_t p4R[4] = {p4_1[0]+ p4_2[0], p4_1[1]+p4_2[1],
         p4_1[2]+p4_2[2], p4_1[3]+p4_2[3] };
 
     // amplitude for eta(1405)->a_0 pi0, a_0->K+ K-
     // M = RBW_eta  Barrier_eta * Barrier_a0 * SpinFactor
 
 
-    Double_t barrFactorEta = RooBarrier::Factor(Ang, p4R, p4_solo, _rD);
+    Double_t barrFactorEta = RooBarrier::Factor(AngEta, p4R, p4_solo, rEta);
     Double_t barrFactorRes = RooBarrier::Factor(Ang, p4_1, p4_2, rRes);
-    Double_t spinFactor = RooSpinFactor::SpinFactor(Ang, p4_1, p4_2,
+    Double_t spinFactor = RooSpinFactor::SpinFactor(AngEta, p4_1, p4_2,
             p4_solo);
     // cout<<"spinFactor: "<<spinFactor<<endl;
     // cout<<"rRes: "<<rRes<<endl;
@@ -811,35 +771,37 @@ void MultiDalitPdf::test() {
     cout << "mass of particle 2 is " << TMath::Sqrt(RooP4Vector::dot(_mcp2[0], _mcp2[0])) << endl;
     cout << "mass of particle 3 is " << TMath::Sqrt(RooP4Vector::dot(_mcp3[0], _mcp3[0])) << endl;
     for (int i = 0; i < 10; ++i) {
-        TComplex parAmp = getFFVal(0, _mcp1[i], _mcp2[i], _mcp3[i]);
-        cout << "FF\t" << parAmp << endl;
-        cout << calEva(_mcp1[i], _mcp2[i], _mcp3[i]) << endl;
+        cout << "total Width " << calTotalWidth(_mcp1[i], _mcp2[i], _mcp3[i]) << endl;
+        for (int j = 0; j < _rhoList.getSize(); j++) {
+            TComplex parAmp = getPartAmp(j, _mcp1[i], _mcp2[i], _mcp3[i]);
+            cout << "\tparAmp " << parAmp << endl;
+        }
     }
+    // check the rho of i-th partial waves    
+    RooRealVar *rho(0);
+    RooRealVar *phi(0);
+    for (int i = 0; i < _rhoList.getSize(); i++) {
+        cout << i << "-th waves" << endl;
+        cout <<"\trho = "
+            << reinterpret_cast<RooRealVar*>(_rhoList.at(i))->getVal() << endl;
+        cout <<"\tphi = "
+            << reinterpret_cast<RooRealVar*>(_phiList.at(i))->getVal() << endl;
+    }
+
 
     return;
 }
-Double_t MultiDalitPdf::calEva(const Double_t p4_1[4],
+Double_t MultiDalitPdf::calTotalWidth(const Double_t p4_1[4],
         const Double_t p4_2[4], const Double_t p4_3[4]) const {
     Int_t nAmps = _NameList.size();
-    FillParameter();
     TComplex _Amplitude(0);
-    // cout<<__func__<<endl;
-    _rhoItr->Reset();
-    _phiItr->Reset();
-    RooRealVar *aRho(0), *aPhi(0);
-    Double_t phi(0), rho(0);
     for (int index  = 0; index < nAmps; ++index) {
-        rho = reinterpret_cast<RooRealVar*>(_rhoItr->Next())->getVal();
-        phi = reinterpret_cast<RooRealVar*>(_phiItr->Next())->getVal();
-        // cout<<"index: "<<index<<endl;
-        _Amplitude += rho * TComplex(TMath::Cos(phi), TMath::Sin(phi))
-            * getFFVal(index, p4_1, p4_2, p4_3);
-        // cout<<"rho: "<<_cofV[index]<<endl;
-        // cout<<"getFFVal: "<<getFFVal(index, p4_1, p4_2, p4_3)<<endl;
+        _Amplitude += getPartAmp(index, p4_1, p4_2, p4_3);
     }
     Double_t value = _Amplitude.Rho2();
     return (value <= 0) ? 1e-20 : value;
 }
+
 Double_t MultiDalitPdf::MCIntG() {
     ifstream f;
     f.open(_fracDat);
@@ -852,27 +814,28 @@ Double_t MultiDalitPdf::MCIntG() {
         f >> p4_2[0] >> p4_2[1] >> p4_2[2] >> p4_2[3];
         f >> p4_3[0] >> p4_3[1] >> p4_3[2] >> p4_3[3];
         f>> weight;
-        _sum += weight * calEva(p4_1, p4_2, p4_3);
+        _sum += weight * calTotalWidth(p4_1, p4_2, p4_3);
         i += 1;
     }
     return _sum/i;
 }
-// 2018-03-27
+
+
 void MultiDalitPdf::setPHSPDat(const TString &dat) {
     _PHSPDat = dat;
 }
 
-// 2018-03-28 21:16
-Double_t MultiDalitPdf::getFFVal(const Int_t &ii, const Int_t &jj,
+Double_t MultiDalitPdf::getCrossWidth(const Int_t &ii, const Int_t &jj,
         const  Double_t p4_1[4], const Double_t p4_2[4],
         const Double_t p4_3[4]) {
-    TComplex _Ampii = getFFVal(ii, p4_1, p4_2, p4_3);
-    TComplex _Ampjj = getFFVal(jj, p4_1, p4_2, p4_3);
+    // return  (A_i * conj[A_j] + conj[A_i] * A_j)/2
+    TComplex _Ampii = getPartAmp(ii, p4_1, p4_2, p4_3);
+    TComplex _Ampjj = getPartAmp(jj, p4_1, p4_2, p4_3);
     TComplex module = _Ampii*TComplex::Conjugate(_Ampjj)
         + _Ampjj * TComplex::Conjugate(_Ampii);
     return 0.5*module.Re();
 }
-// 2018-03-30 20:05
+
 inline  MultiDalitPdf::~MultiDalitPdf() {
     for (Int_t i  = 0 ; i < Nmc;  i++) {
         delete[] _mcp1[i];
@@ -880,21 +843,7 @@ inline  MultiDalitPdf::~MultiDalitPdf() {
         delete[] _mcp3[i];
     }
     delete[] _weight;
-    for (int i  = 0 ; i < 50 ; ++i) {
-    // delete[] _Couple[i];
-    delete[] _ParAmpInt[i];
-    }
-    TIterator *itrRho = _rhoList.createIterator();
-    TIterator *itrPhi = _phiList.createIterator();
-    RooRealVar *aRho(0);
-    RooRealVar *aPhi(0);
-    // // // // // // // cout<<"_rhoList size: "<<_rhoList.getSize()<<endl;
-    Int_t nAmps = _rhoList.getSize();
-    for (Int_t index  = 0 ; index < nAmps; ++index) {
-        TComplex cof, partAmp(0);
-        aRho = reinterpret_cast<RooRealVar*>(itrRho->Next());
-        aPhi = reinterpret_cast<RooRealVar*>(itrPhi->Next());
-    }
+
 }
 
 
@@ -989,6 +938,9 @@ void MultiDalitPdf::PartAmpInt() {
 // void MultiDalitPdf::FreeLineShape() {
 //    _freeShape = true;
 // }
+
+
+
 void MultiDalitPdf::FillParameter() const {
     Int_t nAmps = _NameList.size();
     _parsItr->Reset();
@@ -1014,24 +966,23 @@ void MultiDalitPdf::FillParameter() const {
     return;
 }
 
-TComplex MultiDalitPdf::getFFVal(const Int_t & index,
+TComplex MultiDalitPdf::getPartAmp(const Int_t & index,
         const  Double_t p4_1[4],
         const Double_t p4_2[4],
         const Double_t p4_3[4]) const {
-    TComplex partAmp;
-    DecayType::DecayType modeNum = _DecayNumList[index];
+    TComplex partAmp(0);
 
     int source = _sourceList[index];
 
+    // cout << "getPartAmp:: source = " << source << endl; 
     vector<Double_t> motherparas(&_motheparaList[_mothParsBegin[source]],
             &_motheparaList[_mothParsBegin[source+1]]);
-
     vector<Double_t> resparas(&_resparaList[_resoParsBegin[index]],
             &_resparaList[_resoParsBegin[index+1]]);
 
-    // for (int i = 0; i < _paraSize[index]; i++) {
-    //     resparas.push_back(_resparas[index][i]);
-    // }
+    DecayType::DecayType modeNum = _DecayNumList[index];
+    // cout << "getPartAmp modeNum = " << modeNum << endl;
+    // cout << "getPartAmp index = " << index << endl;
     if (modeNum == 1) {
         partAmp = PartialAmplitude(index, motherparas, resparas, p4_2, p4_3, p4_1);
     } else if (modeNum == 2) {
@@ -1039,9 +990,14 @@ TComplex MultiDalitPdf::getFFVal(const Int_t & index,
     } else {
         partAmp = PartialAmplitude(index, motherparas, resparas, p4_1, p4_2, p4_3);
     }
-    // cout<<__func__<<endl;
-    // cout<<"partal amplitude: "<<partAmp<<endl;
-    return partAmp;
+    
+    // obtain the rho and phi
+    double rho = reinterpret_cast<RooRealVar*>(_rhoList.at(index))->getVal();
+    double phi = reinterpret_cast<RooRealVar*>(_phiList.at(index))->getVal();
+    // cout << "getPartAmp:: rho = " << rho << endl;
+    // cout << "getPartAmp:: phi = " << phi << endl;
+    // cout<<"getPartAmp partal amplitude: "<<partAmp<<endl;
+    return partAmp * TComplex(rho*TMath::Cos(phi), rho*TMath::Sin(phi));
 }
 
 void MultiDalitPdf::DIYMC(const Int_t& events, const TString& fout,
@@ -1093,7 +1049,7 @@ void MultiDalitPdf::DIYMC(const Int_t& events, const TString& fout,
         Double_t p4_1[4]={p1->E(), p1->Px(), p1->Py(), p1->Pz()};
         Double_t p4_2[4]={p2->E(), p2->Px(), p2->Py(), p2->Pz()};
         Double_t p4_3[4]={p3->E(), p3->Px(), p3->Py(), p3->Pz()};
-        Double_t amp = calEva(p4_1, p4_2, p4_3);
+        Double_t amp = calTotalWidth(p4_1, p4_2, p4_3);
         if (random.Uniform (0, maxAmp*1.1) >amp) continue;
         outdat << p1->E() <<"\t"
              << p1->Px() << "\t"
@@ -1149,7 +1105,7 @@ Double_t MultiDalitPdf::MaxAmp() {
         Double_t p4_1[4]={p1->E(), p1->Px(), p1->Py(), p1->Pz() };
         Double_t p4_2[4]={p2->E(), p2->Px(), p2->Py(), p2->Pz() };
         Double_t p4_3[4]={p3->E(), p3->Px(), p3->Py(), p3->Pz() };
-        Double_t amp = calEva(p4_1, p4_2, p4_3);
+        Double_t amp = calTotalWidth(p4_1, p4_2, p4_3);
         if (amp > maxAmp) {
             maxAmp = amp;
         }

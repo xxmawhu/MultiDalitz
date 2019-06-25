@@ -86,23 +86,22 @@ class MultiDalitPdf : public RooAbsPdf {
         bool addResonance(const TString &name, const TString &mothername,
                 const LineShape::Shape &shape, 
                 const DecayType::DecayType &modetype,
-                RooRealVar &rho, RooRealVar &phi,
+                RooAbsReal &rho, RooAbsReal &phi,
                 RooArgList &params,
                 const Int_t & angL);
-        void fitFractions(const RooArgList& newPar, Bool_t
-                prInt_t = kFALSE, ostream& os = std::cout);
+        void fitFractions(ostream& os);
         Int_t setPar(const RooArgList& newPar);
         Double_t MCIntG();
         void DIYMC(const Int_t& events, const TString& fout,
                 const Int_t&sed);
 
         void test();
-        Double_t calEva(const Double_t *p1, const Double_t *p2,
+        Double_t calTotalWidth(const Double_t *p1, const Double_t *p2,
                 const Double_t *p3) const;
-        Double_t getFFVal(const Int_t &ii, const Int_t &jj,
+        Double_t getCrossWidth(const Int_t &ii, const Int_t &jj,
                 const Double_t _p4_1[4], const Double_t _p4_2[4],
                 const Double_t _p4_3[4]);
-        TComplex getFFVal(const Int_t & index,
+        TComplex getPartAmp(const Int_t & index,
                 const  Double_t p4_1[4],
                 const Double_t p4_2[4],
                 const Double_t p4_3[4]) const;
