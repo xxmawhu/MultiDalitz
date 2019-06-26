@@ -172,7 +172,6 @@ class MultiDalitPdf : public RooAbsPdf {
     TString  _fracDat , _PHSPDat;
 
     Int_t *_paraSize;
-    TComplex **_ParAmpInt;
 
     Double_t **_mcp1;
     Double_t **_mcp2;

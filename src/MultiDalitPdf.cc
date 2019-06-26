@@ -106,12 +106,6 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
     _mcp2 = new Double_t*[Nmc];
     _mcp3 = new Double_t*[Nmc];
     _weight = new Double_t[Nmc];
-    // _Couple = new TComplex*[50];
-    _ParAmpInt = new TComplex*[50];
-    for (int i = 0; i < 50; i++) {
-        // _Couple[i] = new TComplex[50];
-        _ParAmpInt[i] = new TComplex[50];
-    }
     for (Int_t i = 0; i < Nmc; i++) {
         _mcp1[i] = new Double_t[4];
         _mcp2[i] = new Double_t[4];
@@ -163,11 +157,6 @@ void MultiDalitPdf::initialize() {
     _mothParsBegin = new Int_t[50];
     // _mothParsEnd = new Int_t[50];
 
-    _ParAmpInt = new TComplex*[50];
-    for (int i = 0; i < 50; i++) {
-        // _Couple[i] = new TComplex[50];
-        _ParAmpInt[i] = new TComplex[50];
-    }
     for (Int_t i = 0; i < Nmc; i++) {
         _mcp1[i] = new Double_t[4];
         _mcp2[i] = new Double_t[4];
