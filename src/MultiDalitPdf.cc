@@ -83,24 +83,11 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
     _NameList = other._NameList;
     _LineShapeList = other._LineShapeList;
     _DecayNumList = other._DecayNumList;
-    // _resoParsEnd = other._resoParsEnd;
     _sourceList = other._sourceList;
     _angL = other._angL;
     _motherName = other._motherName;
     _motherShapeList = other._motherShapeList;
-    // _NeedSpin = other._NeedSpin;
-    // _NeedrRes = other._NeedrRes;
-    /*
-       _mcp1 = other._mcp1;
-       _mcp2 = other._mcp2;
-       _mcp3 = other._mcp3;
-       _weight = other._weight;
-       */
 
-
-    // m_fixbr = other.m_fixbr;
-    // _freeShape = other._freeShape;
-    //m_fixFFa0 = other.m_fixFFa0;
     Nmc = other.Nmc;
     _mcp1 = new Double_t*[Nmc];
     _mcp2 = new Double_t*[Nmc];
@@ -126,15 +113,8 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
         _mcp3[i][3] = other._mcp3[i][3];
         _weight[i] = other._weight[i];
     }
-    for (int i  = 0; i < 50; i++) {
-        for (int j  = 0; j < 50; j++) {
-            //_Couple[i][j] = other._Couple[i][j];
-            _ParAmpInt[i][j] = other._ParAmpInt[i][j];
-        }
-    }
     _resoParsBegin = new Int_t[50];
     _resoParsBegin[0] = 0;
-    // _resoParsEnd = new Int_t[50];
     _mothParsBegin = new Int_t[50];
     _mothParsBegin[0] = 0;
     // _mothParsEnd = new Int_t[50];
@@ -350,7 +330,6 @@ void MultiDalitPdf::project(const char* proFileName) {
 
 
 void MultiDalitPdf::fitFractions(ostream&os=cout) {
-    //FillParameter();
     double p4_1[4], p4_2[4], p4_3[4], weight;
     int nWaves = _rhoList.getSize();
     double **FF = new double*[nWaves];
@@ -410,7 +389,7 @@ void MultiDalitPdf::fitFractions(ostream&os=cout) {
     cout << "the partial fraction is" << endl << endl;
     for (int i = 0; i < nWaves; i++) {
         cout << "\t" <<std::setw(10) <<  _NameList[i] << " fraction is " 
-            << std::setw(4)<< std::setprecision(2) << FF[i][i]/sum*100 << "%"
+            << std::setw(6)<< std::setprecision(4) << FF[i][i]/sum*100 << "%"
             << endl;
     }
     fclose(fp);
@@ -766,97 +745,6 @@ inline  MultiDalitPdf::~MultiDalitPdf() {
 }
 
 
-/*
-Double_t MultiDalitPdf::ConstrFactor(const Double_t &FFa0) const {
-    if (!m_fixbr) return 1.0;
-    _rhoItr->Reset();
-    _phiItr->Reset();
-    int nAmps = _NameList.size();
-    TComplex *RhoList = new TComplex[nAmps];
-    for (Int_t index = 0; index < nAmps; ++index) {
-        RooRealVar *aRho = reinterpret_cast<RooRealVar*>(_rhoItr->Next());
-        RooRealVar *aPhi = reinterpret_cast<RooRealVar*>(_phiItr->Next());
-        Double_t rho = aRho->getVal();
-        Double_t phi = aPhi->getVal();
-        RhoList[index] = TComplex(rho*TMath::Cos(phi), rho*TMath::Sin(phi));
-    }
-    TComplex donmin(0, 0);
-    for (Int_t ii = 0; ii < nAmps; ++ii) {
-        for (Int_t jj = 0; jj< nAmps; ++jj) {
-            donmin += _Couple[ii][jj] * RhoList[ii] *
-                TComplex::Conjugate(RhoList[jj]);
-        }
-    }
-    // // cout<<"donminer:"<<donmin<<endl;
-    Double_t AmpA0 = _Couple[0][0] * RhoList[0] *
-        TComplex::Conjugate(RhoList[0]);
-    Double_t g = fabs(AmpA0/(Double_t)donmin - FFa0);
-    // // cout<<" g "<<g<<endl;
-    _others->Reset();
-    RooRealVar *aLm = reinterpret_cast<RooRealVar*>(_others->Next());
-    Double_t aLmVal = aLm->getVal();
-    delete[] RhoList;
-    return TMath::Exp(-aLmVal * g  - 100 * g * g);
-}
-*/
-
-
-/*
-void MultiDalitPdf::PartAmpInt() {
-    // Double_t
-    int nAmps = _NameList.size();
-    RooRealVar *aPara(0);
-    Int_t i = 0;
-    Double_t _sum = 0;
-    for (int nn = 0; nn < nAmps; ++nn) {
-        for (Int_t mm = 0; mm < nAmps ; ++mm) {
-            _Couple[nn][mm] = 0;
-        }
-    }
-    TComplex *partiAmpList = new TComplex[nAmps];
-    ifstream f;
-    f.open(_fracDat);
-    while (1) {
-        if (f.eof () != 0) break;
-        Double_t p4_1[4], p4_2[4], p4_3[4], weight;
-        f >> p4_1[0] >> p4_1[1] >> p4_1[2] >> p4_1[3];
-        f >> p4_2[0] >> p4_2[1] >> p4_2[2] >> p4_2[3];
-        f >> p4_3[0] >> p4_3[1] >> p4_3[2] >> p4_3[3];
-        f>> weight;
-        i += 1;
-        if (i > 4E5) break;
-        _parsItr->Reset();
-        for (Int_t index  = 0; index < nAmps; ++index) {
-            partiAmpList[index] = getFFVal(index, p4_1, p4_2, p4_3);
-        }
-        for (int nn = 0; nn < nAmps; ++nn) {
-            for (Int_t mm = 0; mm < nAmps ; ++mm) {
-                _Couple[nn][mm]  += 1.0/Nmc * weight * partiAmpList[nn]
-                    *TComplex::Conjugate(partiAmpList[mm]);
-            }
-        }
-    }
-    for (int nn = 0; nn < nAmps; ++nn) {
-        for (Int_t mm = 0; mm < nAmps ; ++mm) {
-            cout << "Couple of " << nn << " and " << mm << " is "
-                 << _Couple[nn][mm] << endl;
-        }
-    }
-    delete[] partiAmpList;
-}
-*/
-
-
-// void MultiDalitPdf::setLambda(RooRealVar &aLambda, const Double_t &FF) {
-//    m_fixbr = true;
-//    m_fixFFa0 = FF;
-//    _OthersCol.add(aLambda);
-// }
-
-// void MultiDalitPdf::FreeLineShape() {
-//    _freeShape = true;
-// }
-
 TComplex MultiDalitPdf::getPartAmp(const Int_t & index,
         const  Double_t p4_1[4],
         const Double_t p4_2[4],
@@ -916,7 +804,6 @@ void MultiDalitPdf::DIYMC(const Int_t& events, const TString& fout,
     }
     f.close();
     Double_t M = (p4_1 + p4_2 + p4_3).M();
-    //FillParameter();
     // cout<<__func__<<endl;
     // cout<<"mass of mother: "<<M<<endl;
     TLorentzVector p4D(0, 0, 0, M);
@@ -978,7 +865,6 @@ Double_t MultiDalitPdf::MaxAmp() {
         break;
     }
     f.close();
-    //FillParameter();
     Double_t M  = (p4_1.E() + p4_2.E() + p4_3.E());
     TLorentzVector p4D(0, 0, 0, M);
     Double_t m1 =  p4_1.M();

@@ -47,64 +47,63 @@
 #include "DecayType.hh"
 class MultiDalitPdf : public RooAbsPdf {
  public:
-        MultiDalitPdf(const char *name, const char *title,
-                RooAbsReal& _p11,
-                RooAbsReal& _p12,
-                RooAbsReal& _p13,
-                RooAbsReal& _p14,
-                RooAbsReal& _p21,
-                RooAbsReal& _p22,
-                RooAbsReal& _p23,
-                RooAbsReal& _p24,
-                RooAbsReal& _p31,
-                RooAbsReal& _p32,
-                RooAbsReal& _p33,
-                RooAbsReal& _p34,
-                const TString &PHSPDat);
-        MultiDalitPdf(const MultiDalitPdf& other, const char* name = 0);
-        virtual TObject* clone(const char* newname) const {
-            return new MultiDalitPdf(*this, newname);
-        }
-        inline virtual ~MultiDalitPdf();
+     MultiDalitPdf(const char *name, const char *title,
+             RooAbsReal& _p11,
+             RooAbsReal& _p12,
+             RooAbsReal& _p13,
+             RooAbsReal& _p14,
+             RooAbsReal& _p21,
+             RooAbsReal& _p22,
+             RooAbsReal& _p23,
+             RooAbsReal& _p24,
+             RooAbsReal& _p31,
+             RooAbsReal& _p32,
+             RooAbsReal& _p33,
+             RooAbsReal& _p34,
+             const TString &PHSPDat);
+     MultiDalitPdf(const MultiDalitPdf& other, const char* name = 0);
+     virtual TObject* clone(const char* newname) const {
+         return new MultiDalitPdf(*this, newname);
+     }
+     inline virtual ~MultiDalitPdf();
 
-        void project(const char* fname);
-        void setFracDat(const TString &dat);
-        void setPHSPDat(const TString &dat);
-        void setIdenticalParticle(const Int_t & ii = 0);
-        void setrD(const Double_t &);
-        void init();
-        void setLambda(RooRealVar &aLambda, const Double_t &FF = 0.266);
-        void FreeLineShape();
+     void project(const char* fname);
+     void setFracDat(const TString &dat);
+     void setPHSPDat(const TString &dat);
+     void setIdenticalParticle(const Int_t & ii = 0);
+     void setrD(const Double_t &);
+     void init();
+     void setLambda(RooRealVar &aLambda, const Double_t &FF = 0.266);
+     void FreeLineShape();
 
-        // parameters is the list of paramter, the order: spin,
-        // effective radius, mass, width( or g1, g2 ...)
-        // for RBW, the last parameter must be width
-        // for flatte, the last two parameter is g1, g2
+     // parameters is the list of paramter, the order: spin,
+     // effective radius, mass, width( or g1, g2 ...)
+     // for RBW, the last parameter must be width
+     // for flatte, the last two parameter is g1, g2
 
-        bool configMother(const TString &name, const TString &title,
-                const LineShape::Shape &shape, RooArgList &parameters);
-        bool addResonance(const TString &name, const TString &mothername,
-                const LineShape::Shape &shape, 
-                const DecayType::DecayType &modetype,
-                RooAbsReal &rho, RooAbsReal &phi,
-                RooArgList &params,
+     bool configMother(const TString &name, const TString &title,
+             const LineShape::Shape &shape, RooArgList &parameters);
+     bool addResonance(const TString &name, const TString &mothername,
+             const LineShape::Shape &shape, 
+             const DecayType::DecayType &modetype,
+             RooAbsReal &rho, RooAbsReal &phi,
+             RooArgList &params,
                 const Int_t & angL);
-        void fitFractions(ostream& os);
-        Int_t setPar(const RooArgList& newPar);
-        Double_t MCIntG();
-        void DIYMC(const Int_t& events, const TString& fout,
-                const Int_t&sed);
+     void fitFractions(ostream& os);
+     Int_t setPar(const RooArgList& newPar);
+     Double_t MCIntG();
+     void DIYMC(const Int_t& events, const TString& fout,  const Int_t&sed);
 
-        void test();
-        Double_t calTotalWidth(const Double_t *p1, const Double_t *p2,
-                const Double_t *p3) const;
-        Double_t getCrossWidth(const Int_t &ii, const Int_t &jj,
-                const Double_t _p4_1[4], const Double_t _p4_2[4],
-                const Double_t _p4_3[4]);
-        TComplex getPartAmp(const Int_t & index,
-                const  Double_t p4_1[4],
-                const Double_t p4_2[4],
-                const Double_t p4_3[4]) const;
+     void test();
+     Double_t calTotalWidth(const Double_t *p1, const Double_t *p2,
+             const Double_t *p3) const;
+     Double_t getCrossWidth(const Int_t &ii, const Int_t &jj,
+             const Double_t _p4_1[4], const Double_t _p4_2[4],
+             const Double_t _p4_3[4]);
+     TComplex getPartAmp(const Int_t & index,
+             const  Double_t p4_1[4],
+             const Double_t p4_2[4],
+             const Double_t p4_3[4]) const;
 
  protected:
     RooRealProxy p11;
@@ -131,9 +130,7 @@ class MultiDalitPdf : public RooAbsPdf {
 
  private:
     Int_t *_resoParsBegin;
-    // Int_t *_resoParsEnd;
     Int_t *_mothParsBegin;
-    // Int_t *_mothParsEnd;
     RooListProxy _ParameterCol;
     RooListProxy _motherParameters;
     RooListProxy _OthersCol;
