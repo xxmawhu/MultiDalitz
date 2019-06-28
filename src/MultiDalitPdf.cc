@@ -47,8 +47,6 @@ ClassImp(MultiDalitPdf)
     _others = _OthersCol.createIterator();
     _rhoItr = _rhoList.createIterator();
     _phiItr = _phiList.createIterator();
-    // _rhoList = RooArgList("rhoList");
-    // _phiList = RooArgList("phiList");
     _PHSPDat = PHSPdat;
     initialize();
 }
@@ -117,12 +115,9 @@ MultiDalitPdf::MultiDalitPdf(const MultiDalitPdf& other, const char* name):
     _resoParsBegin[0] = 0;
     _mothParsBegin = new Int_t[50];
     _mothParsBegin[0] = 0;
-    // _mothParsEnd = new Int_t[50];
     for (Int_t i =0; i < 50; ++i) {
         _resoParsBegin[i] = other._resoParsBegin[i];
-        //  _resoParsEnd[i] = other._resoParsEnd[i];
         _mothParsBegin[i] = other._mothParsBegin[i];
-        // _mothParsEnd[i] = other._mothParsEnd[i];
     }
 }
 void MultiDalitPdf::initialize() {
@@ -131,11 +126,8 @@ void MultiDalitPdf::initialize() {
     _mcp2 = new Double_t*[Nmc];
     _mcp3 = new Double_t*[Nmc];
     _weight = new Double_t[Nmc];
-    // _Couple = new TComplex*[50];
     _resoParsBegin = new Int_t[50];
-    // _resoParsEnd = new Int_t[50];
     _mothParsBegin = new Int_t[50];
-    // _mothParsEnd = new Int_t[50];
 
     for (Int_t i = 0; i < Nmc; i++) {
         _mcp1[i] = new Double_t[4];
@@ -452,13 +444,6 @@ bool MultiDalitPdf::configMother(const TString &name, const TString &title,
     _mothParsBegin[index+1] = _mothParsBegin[index] + parameters.getSize();
     cout << endl << endl;
     return true;
-    // if (index == 0) {
-    //     _mothParsBegin[0] = 0;
-    //     _mothParsEnd[0] = parameters.getSize();
-    // } else {
-    //     _mothParsBegin[index] = _mothParsBegin[index-1] + parameters.getSize();
-    //     _mothParsEnd[index] = _mothParsBegin[index] + parameters.getSize();
-    // }
 }
 
 
@@ -470,10 +455,6 @@ bool MultiDalitPdf::addResonance(const TString &name, const TString &mothername,
     // mothername used to match the mother, the "mothername" must be add in the
     // configMother
     // fix the first amplitude rho and phi
-    //if (_rhoList.getSize() == 0) {
-    //    reinterpret_cast<RooRealVar*>(rho).setConstant();
-    //    reinterpret_cast<RooRealVar*>(phi).setConstant();
-    //}
 
     // check the resonance list
     if (std::find (_NameList.begin (), _NameList.end (), name)!= _NameList.end()) {
@@ -585,10 +566,6 @@ TComplex MultiDalitPdf::PartialAmplitude(const Int_t & index,
     int resParsEnd = _resoParsBegin[index+1];
     // order spin, effective radius, mass, width,
     Double_t reta = mothpars[1];
-    // vector<Double_t> mothPars;
-    // for (int i = mothParsBegin; i < mothParsEnd; ++i) {
-    //     mothPars.push_back(_motherParameters.at(i)->getVal());
-    // }
     Double_t p4total[4] = {
         p4_1[0] + p4_2[0] + p4_solo[0],
         p4_1[1] + p4_2[1] + p4_solo[1],
