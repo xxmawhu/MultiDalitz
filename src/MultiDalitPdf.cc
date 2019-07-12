@@ -386,10 +386,39 @@ void MultiDalitPdf::fitFractions(ostream&os=cout) {
     }
     fclose(fp);
 
+    cout << "Inf:: Efficiency = " << this->efficiency() << endl;
+
     delete []FF;
     delete []tmp;
 }
 
+
+double MultiDalitPdf::efficiency() {
+    // efficiency = sum_{i in rec} weight * pdf over
+    // sum_{i in truth} weight * pdf
+    
+    double p4_1[4], p4_2[4], p4_3[4], weight;
+    FILE *fp;
+    double totalInt=0, recInt=0;
+    fp=fopen(_fracDat, "r");
+    while (fscanf(fp, "%lf%lf%lf%lf\n%lf%lf%lf%lf\n%lf%lf%lf%lf%lf\n",
+                &p4_1[0], &p4_1[1], &p4_1[2], &p4_1[3],
+                &p4_2[0], &p4_2[1], &p4_2[2], &p4_2[3],
+                &p4_3[0], &p4_3[1], &p4_3[2], &p4_3[3],
+                &weight) != EOF) {
+        totalInt += weight * this->calTotalWidth(p4_1, p4_2, p4_3);
+    }
+    fp=fopen(_PHSPDat, "r");
+    while (fscanf(fp, "%lf%lf%lf%lf\n%lf%lf%lf%lf\n%lf%lf%lf%lf%lf\n",
+                &p4_1[0], &p4_1[1], &p4_1[2], &p4_1[3],
+                &p4_2[0], &p4_2[1], &p4_2[2], &p4_2[3],
+                &p4_3[0], &p4_3[1], &p4_3[2], &p4_3[3],
+                &weight) != EOF) {
+        recInt += weight * this->calTotalWidth(p4_1, p4_2, p4_3);
+    }
+    fclose(fp);
+    return recInt / totalInt;
+}
 
 
 Int_t MultiDalitPdf::setPar(const RooArgList& newPar) {
