@@ -229,13 +229,13 @@ void MultiDalitPdf::setFracDat(const TString &dat) {
 
 
 void MultiDalitPdf::project(const char* proFileName) {
-    for (int i = 0; i < _rhoList.getSize(); i++) {
-        cout << i << "-th waves" << endl;
-        cout <<"\trho = "
-            << reinterpret_cast<RooRealVar*>(_rhoList.at(i))->getVal() << endl;
-        cout <<"\tphi = "
-            << reinterpret_cast<RooRealVar*>(_phiList.at(i))->getVal() << endl;
-    }
+    // for (int i = 0; i < _rhoList.getSize(); i++) {
+    //     cout << i << "-th waves" << endl;
+    //     cout <<"\trho = "
+    //         << reinterpret_cast<RooRealVar*>(_rhoList.at(i))->getVal() << endl;
+    //     cout <<"\tphi = "
+    //         << reinterpret_cast<RooRealVar*>(_phiList.at(i))->getVal() << endl;
+    // }
     TFile f(proFileName, "recreate");
     TTree t("project", "the project of the mulitdalitz plot fit result");
 
@@ -289,7 +289,7 @@ void MultiDalitPdf::project(const char* proFileName) {
         eva =  _weight[i] * calTotalWidth(_mcp1[i],  _mcp2[i],  _mcp3[i]);
         if (eva > max) {
             max = eva;
-            cout << "project max = " << max << endl;
+            //cout << "project max = " << max << endl;
         }
         waves = nAmps * nAmps;
         for (int ii = 0; ii < nAmps; ii++) {
@@ -335,14 +335,15 @@ void MultiDalitPdf::fitFractions(ostream&os=cout) {
     }
     TComplex *tmp = new TComplex[nWaves];
     int nEvents = 0.0;
-    
-    for (int i = 0; i < _rhoList.getSize(); i++) {
-        cout << i << "-th waves" << endl;
-        cout <<"\trho = "
-            << reinterpret_cast<RooRealVar*>(_rhoList.at(i))->getVal() << endl;
-        cout <<"\tphi = "
-            << reinterpret_cast<RooRealVar*>(_phiList.at(i))->getVal() << endl;
-    }
+
+    // check the rho  
+    // for (int i = 0; i < _rhoList.getSize(); i++) {
+    //     cout << i << "-th waves" << endl;
+    //     cout <<"\trho = "
+    //         << reinterpret_cast<RooRealVar*>(_rhoList.at(i))->getVal() << endl;
+    //     cout <<"\tphi = "
+    //         << reinterpret_cast<RooRealVar*>(_phiList.at(i))->getVal() << endl;
+    // }
 
     FILE *fp;
     fp=fopen(_fracDat, "r");
@@ -359,7 +360,7 @@ void MultiDalitPdf::fitFractions(ostream&os=cout) {
         }
         if (amp.Rho2() > max) {
             max = amp.Rho2();
-            cout << "fitFractions:: amp = " << amp.Rho2() << endl;
+            //cout << "fitFractions:: amp = " << amp.Rho2() << endl;
         }
         for (int i = 0; i < nWaves; i++) {
             for (int j = 0; j < nWaves; j++) {
@@ -384,7 +385,29 @@ void MultiDalitPdf::fitFractions(ostream&os=cout) {
             << std::setw(6)<< std::setprecision(4) << FF[i][i]/sum*100 << "%"
             << endl;
     }
+    // obtain the fraction for eta(1405) and eta(1475)
+    int nMother = _motherShapeList.size();
+    for (int i=0; i< nMother; i++) {
+        int source = i;
+        cout << "the partial fraction for "<< std::setw(15) << _motherName[source] << " = ";
+        double tmpAmp = 0;
+        for (int ii = 0; ii < nWaves; ii++) {
+            if (_sourceList[ii] != source) {
+                continue;
+            }
+            for (int jj = 0; jj < nWaves; jj++) {
+                if (_sourceList[jj] != source) {
+                    continue;
+                }
+                tmpAmp += FF[ii][jj];
+            }
+        }
+        cout <<std::setw(6)<< std::setprecision(4) 
+       << tmpAmp /sum * 100 << "%" << endl;
+    }
+
     fclose(fp);
+
 
     cout << "Inf:: Efficiency = " << this->efficiency() << endl;
 
